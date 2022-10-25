@@ -1,0 +1,34 @@
+unlabeled
+OUT_Road
+OUT_Structure
+OUT_Tree
+OUT_Fence
+OUT_Pole
+OUT_Sign
+Vehicle
+OUT_Curbstone
+OUT_Pavement
+OUT_Undefined Stuff
+IN_Hall Way
+IN_Open Space
+IN_Wall
+IN_Pillar
+IN_Obstruction
+IN_Gate
+IN_Elevator
+IN_Sign
+IN_Fence
+IN_Undefined Stuff
+OUT_Grass
+Human
+OUT_Bench
+Stroller
+OUT_Sculpture
+OUT_Traffic Safety Stuff
+Undefined Object
+OUT_Gate
+Two-wheeled Vehicle
+Animal
+Wheelchair
+IN_Bench
+IN_Emergency Stuff
