@@ -159,7 +159,8 @@ def main(config):
                 camera_extrinsic = read_camera_extrinsic_file(os.path.join(calib_dir, 'camera_extrinsic.txt'))
                 calib = (camera_intrinsic, camera_extrinsic)
                 l2c = LiDAR2CameraKITTI(width=width, height=height, calib=calib)
-                depthmap = (l2c.get_projected_image(np_points)).astype(np.uint8) / 10000
+                depthmap, _ = l2c.get_projected_image(None, np_points)
+                depthmap = depthmap.astype(np.uint8) / 10000
                 camera_matrix = get_camera_param(camera_intrinsic[0], 'color')
                 hha = getHHA(camera_matrix, depthmap, depthmap)
                 cv2.imwrite(os.path.join(output_modal, "{}.png".format(fn)), hha)

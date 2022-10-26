@@ -180,9 +180,9 @@ class LiDAR2CameraKITTI(object):
 
         return imgfov_cam_point_cloud, imgfov_points_2d
 
-    def get_projected_image(self, point_cloud_mat, range_meter=100.0, min_depth_filter=True, debug=False):
+    def get_projected_image(self, img, point_cloud_mat, range_meter=100.0, min_depth_filter=True, debug=False):
         """ Project LiDAR points to image """
-
+       
         # point_cloud in lidar: (n, 3)
         self.point_cloud = point_cloud_mat
 
@@ -215,24 +215,25 @@ class LiDAR2CameraKITTI(object):
         self.imgfov_depthmap = np.zeros((self.height, self.width))
         row_idx, col_idx = self.imgfov_points_2d[:, 1].astype(np.int16), self.imgfov_points_2d[:, 0].astype(np.int16)
         self.imgfov_depthmap[row_idx, col_idx] = self.imgfov_depth
+        
+        if img is not None:             # 튜토리얼 용
+            cmap = plt.cm.get_cmap("jet", 256)
+            cmap = np.array([cmap(i) for i in range(256)])[:, :3] * 255
+    #         print(self.imgfov_depth)
+    #         print(np.max(self.imgfov_depth))
+    #         print(self.imgfov_depthmap)
+    #         print()
+    #         print(self.imgfov_points_2d)
 
-        # cmap = plt.cm.get_cmap("jet", 256)
-        # cmap = np.array([cmap(i) for i in range(256)])[:, :3] * 255
-        # print(self.imgfov_depth)
-        # print(np.max(self.imgfov_depth))
-        # print(self.imgfov_depthmap)
-        # print()
-        # print(self.imgfov_points_2d)
-        # img = self.img.copy()
-        # for i in range(self.imgfov_points_2d.shape[0]):
-        #     depth = self.imgfov_depth[i]
-        #
-        #     # set color in range from 0 to range_meter (ex. 50 m)
-        #     color_index = int(255 * min(depth, range_meter) / range_meter)
-        #     color = cmap[color_index, :]
-        #     cv2.circle(
-        #         img, (int(np.round(self.imgfov_points_2d[i, 0])), int(np.round(self.imgfov_points_2d[i, 1]))), 2,
-        #         color=tuple(color),
-        #         thickness=-1)
+            for i in range(self.imgfov_points_2d.shape[0]):
+                depth = self.imgfov_depth[i]
 
-        return self.imgfov_depthmap
+                # set color in range from 0 to range_meter (ex. 50 m)
+                color_index = int(255 * min(depth, range_meter) / range_meter)
+                color = cmap[color_index, :]
+                cv2.circle(
+                    img, (int(np.round(self.imgfov_points_2d[i, 0])), int(np.round(self.imgfov_points_2d[i, 1]))), 2,
+                    color=tuple(color),
+                    thickness=-1)
+
+        return self.imgfov_depthmap, img
