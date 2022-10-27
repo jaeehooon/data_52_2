@@ -10,7 +10,7 @@ import json
 def get_files(path):
     file_list = []
     for (root, _, files) in os.walk(path):
-        if len(files) > 0 and files[0] != '.DS_Store':
+        if len(files) > 0:
             for fn in files:
                 if os.path.splitext(fn)[1] in ['.json', '.png', '.pcd']:
                     file_list.append(
