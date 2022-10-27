@@ -81,9 +81,12 @@ def main(config):
             pcd_fn_list = set(get_file_names(pcd_list))
 
             common_file_names = list(
-                de_id_fn_list & mask_fn_list & seg_fn_list &
-                camera_fn_list & pcd_fn_list
+                de_id_fn_list & mask_fn_list & seg_fn_list & pcd_fn_list
             )
+            print('#############')
+            print("가공 데이터 공통 파일 수 : ", len(list(de_id_fn_list & mask_fn_list & seg_fn_list)))
+            print("가공 데이터(seg)와 정제 데이터(refine/pcd)와 공통 파일 수: ", len(common_file_names))
+            print("############")
 
             # 이미 final 에 존재하는 파일 개수, 처리 해야하는 파일 개수
             _no_target_file = set(existing_file_names) & set(common_file_names)
@@ -97,6 +100,7 @@ def main(config):
             print("\t>>> de-identification:\t{:,d}/{:,d}".format(len(common_file_names), len(de_id_fn_list)))
             print("\t>>> mask:\t\t\t\t{:,d}/{:,d}".format(len(common_file_names), len(mask_fn_list)))
             print("\t>>> segmentation:\t\t{:,d}/{:,d}".format(len(common_file_names), len(seg_fn_list)))
+
             print("  Data")
             print("\t>>> camera:\t\t\t\t{:,d}/{:,d}".format(len(common_file_names), len(camera_fn_list)))
             print("\t>>> pcd:\t\t\t\t{:,d}/{:,d}".format(len(common_file_names), len(pcd_fn_list)))
