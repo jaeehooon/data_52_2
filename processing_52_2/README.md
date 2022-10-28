@@ -63,5 +63,5 @@
    │   ├── LabelFolder
    │   ├── class_names.txt
    │   ├── train.txt (You should run 'train_test_split.ipynb')
-   └   ├── test.txt (You should run 'train_test_split.ipynb')
+   │   └── test.txt (You should run 'train_test_split.ipynb')
    ```
