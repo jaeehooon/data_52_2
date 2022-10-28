@@ -49,4 +49,19 @@
    │ ...
    ```
    
+2. run
+   ```
+   python main.py --data_root [DATA ROOT] --output_path [FINAL DATA ROOT]
+   ```
    
+3. Results
+   ```
+   52_2
+   ├── final
+   │   ├── RGBFolder
+   │   ├── ModalXFolder
+   │   ├── LabelFolder
+   │   ├── class_names.txt
+   │   ├── train.txt (You should run 'train_test_split.ipynb')
+   └   ├── test.txt (You should run 'train_test_split.ipynb')
+   ```
