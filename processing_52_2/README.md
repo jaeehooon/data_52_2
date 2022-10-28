@@ -51,7 +51,7 @@
    
 2. run
    ```
-   python main.py --data_root [DATA ROOT] --output_path [FINAL DATA ROOT]
+   python main.py --data_root [DATA ROOT] --output_path [FINAL DATA ROOT] --class_name_path [CLASS NAME FILE PATH]
    ```
    
 3. Results
