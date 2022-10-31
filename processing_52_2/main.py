@@ -18,6 +18,8 @@ def define_args():
                    help="the path of output data")
     p.add_argument('--class_name_path', type=str, default='./class_names.txt',
                    help='the path of class names')
+    p.add_argument('--save_class_name', type=bool, default=True,
+                   help="whether you'll save the class name file or not")
     config = p.parse_args()
     return config
 
@@ -48,16 +50,16 @@ def main(config):
     if not os.path.exists(output_modal):
         os.makedirs(output_modal)
 
-    existing_file_names = get_file_names(get_files(output_label))
+    existing_file_names = get_file_names(get_files(output_label), is_existing_file=True)
 
     for idx, target in enumerate(target_list):
         print("\nIdx >>> ", idx + 1)
         print("  ", '/'.join(target))
-        comp, loc, scene, weather, date, numbering = target
+        comp, loc, scene, weather, date, timezone = target
 
-        label_dir = os.path.join(data_root, comp, loc, scene, weather, date, numbering, 'seg')
-        refine_dir = os.path.join(data_root, comp, loc, scene, weather, date, numbering, 'refine')
-        calib_dir = os.path.join(data_root, comp, loc, scene, weather, date, numbering, 'calibration')
+        label_dir = os.path.join(data_root, comp, loc, scene, weather, date, timezone, 'seg')
+        refine_dir = os.path.join(data_root, comp, loc, scene, weather, date, timezone, 'refine')
+        calib_dir = os.path.join(data_root, comp, loc, scene, weather, date, timezone, 'calibration')
 
         if len(os.listdir(calib_dir)) > 0:
 
@@ -74,11 +76,12 @@ def main(config):
             camera_list = get_files(os.path.join(refine_dir, 'camera'))
             pcd_list = get_files(os.path.join(refine_dir, 'pcd'))
 
-            de_id_fn_list = set(get_file_names(de_id_list))
-            mask_fn_list = set(get_file_names(mask_list))
-            seg_fn_list = set(get_file_names(seg_list))
-            camera_fn_list = set(get_file_names(camera_list))
-            pcd_fn_list = set(get_file_names(pcd_list))
+            de_id_fn_list = set(get_file_names(de_id_list, target))
+            mask_fn_list = set(get_file_names(mask_list, target))
+            seg_fn_list = set(get_file_names(seg_list, target))
+            camera_fn_list = set(get_file_names(camera_list, target))
+            pcd_fn_list = set(get_file_names(pcd_list, target))
+            print(list(pcd_fn_list)[:4])
 
             common_file_names = list(
                 de_id_fn_list & mask_fn_list & seg_fn_list & pcd_fn_list
@@ -110,13 +113,13 @@ def main(config):
             # labeling
             ###############
             de_id_list = sorted([fn for fn in de_id_list
-                                 if os.path.splitext(os.path.basename(fn))[0] in common_file_names])
+                                 if '_'.join(os.path.splitext(os.path.basename(fn))[0].split('_')[:-1]) in common_file_names])
             mask_list = sorted([fn for fn in mask_list
-                                if os.path.splitext(os.path.basename(fn))[0] in common_file_names])
+                                if '_'.join(os.path.splitext(os.path.basename(fn))[0].split('_')[:-1]) in common_file_names])
             seg_list = sorted([fn for fn in seg_list
-                               if os.path.splitext(os.path.basename(fn))[0] in common_file_names])
+                               if '_'.join(os.path.splitext(os.path.basename(fn))[0].split('_')[:-1]) in common_file_names])
             pcd_list = sorted([fn for fn in pcd_list
-                               if os.path.splitext(os.path.basename(fn))[0] in common_file_names])
+                               if '_'.join(os.path.splitext(os.path.basename(fn))[0].split('_')[:-1]) in common_file_names])
 
             for idx, (de_id_path, mask_path, seg_path, pcd_path) in enumerate(zip(de_id_list, mask_list, seg_list, pcd_list)):
                 fn = os.path.splitext(os.path.basename(de_id_path))[0]
@@ -176,9 +179,12 @@ def main(config):
                              os.path.join(output_rgb, "{}.png".format(fn)))
     print()
     print(class_names)
-    if not os.path.exists('./class_names.txt'):
-        with open('./class_names.txt', 'w') as f:
+
+    if config.save_class_name:
+        with open(config.class_name_path, 'w') as f:
             f.write('\n'.join(list(class_names.keys())))
+
+        assert predefined_class_names == class_names, "predefined class name과 처리된 class name이 다름! 확인 요망"
 
 
 if __name__ == '__main__':
