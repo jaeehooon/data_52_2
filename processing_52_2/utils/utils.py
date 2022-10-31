@@ -32,17 +32,23 @@ def get_files(path):
     return file_list
 
 
-def get_file_names(file_list):
+def get_file_names(file_list, target='', is_existing_file=False):
     """
     파일 리스트에 담긴 파일(경로 포함)의 파일명만 가지고 옴.
         즉, 확장자 제외
 
+    단, target 데이터가 'DOGU/CP/a/cloudy/220719/17-19' 이거나, 기존에 있는 파일을 가져오는 거라면,
+        확장자만 제외하고 가져오고,
+        나머지 target에 대해서는 '날짜_시간_ms.확장자' 라는 파일명에서 '날짜_시간'만 가져옴
+
     Args:
         file_list      파일 리스트
     Return:
-        인자로 받은 파일 리스트 내의 확장자를 제외한 파일명만 담긴 리스트
+        인자로 받은 파일 리스트 내의 확장자를 제외한 파일명 또는 ms 단위 파일을 제외한 파일이 담긴 리스트
     """
-    return [os.path.splitext(os.path.basename(fn))[0] for fn in file_list]
+    if '/'.join(target) == 'DOGU/CP/a/cloudy/220719/17-19' or is_existing_file:
+        return [os.path.splitext(os.path.basename(fn))[0] for fn in file_list]
+    return ['_'.join(os.path.splitext(os.path.basename(fn))[0].split('_')[:-1]) for fn in file_list]
 
 
 def read_class_names(path):
