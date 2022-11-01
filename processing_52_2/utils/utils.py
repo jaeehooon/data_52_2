@@ -32,23 +32,105 @@ def get_files(path):
     return file_list
 
 
-def get_file_names(file_list, target='', is_existing_file=False):
+def get_file_names(file_list):
     """
     파일 리스트에 담긴 파일(경로 포함)의 파일명만 가지고 옴.
-        즉, 확장자 제외
-
+       즉, 확장자 제외
     단, target 데이터가 'DOGU/CP/a/cloudy/220719/17-19' 이거나, 기존에 있는 파일을 가져오는 거라면,
-        확장자만 제외하고 가져오고,
-        나머지 target에 대해서는 '날짜_시간_ms.확장자' 라는 파일명에서 '날짜_시간'만 가져옴
+       확장자만 제외하고 가져오고,
+       나머지 target에 대해서는 '날짜_시간_ms.확장자' 라는 파일명에서 '날짜_시간'만 가져옴
 
     Args:
-        file_list      파일 리스트
+       file_list      파일 리스트
     Return:
-        인자로 받은 파일 리스트 내의 확장자를 제외한 파일명 또는 ms 단위 파일을 제외한 파일이 담긴 리스트
+       인자로 받은 파일 리스트 내의 확장자를 제외한 파일명 또는 ms 단위 파일을 제외한 파일이 담긴 리스트
     """
-    if '/'.join(target) == 'DOGU/CP/a/cloudy/220719/17-19' or is_existing_file:
-        return [os.path.splitext(os.path.basename(fn))[0] for fn in file_list]
-    return ['_'.join(os.path.splitext(os.path.basename(fn))[0].split('_')[:-1]) for fn in file_list]
+    return [os.path.splitext(os.path.basename(fn))[0] for fn in file_list]
+
+
+def split_ms_from_file_name(file_name):
+    """
+    제공받은 파일 이름으로부터 ms 단위의 문자열은 제거하는 메소드
+        ex) 20220719_113432_23.png --> 20220719_113432.png
+
+    Args:
+        file_name   파일 경로(이름)
+    Return:
+        ms 단위를 제거한 파일 경로
+
+    """
+    return '_'.join(file_name.split('_')[:2])
+
+
+def split_ms_from_file_names(file_list):
+    """
+    ms 단위 문자열을 제거한 파일 경로를 담은 리스트를 반환하는 메소드
+        ex) [20220719_113432_23.png, 20220830_124412_34.png, ...]
+         --> [20220719_113432.png, 20220830_124412.png, ...]
+
+    Args:
+        file_list       파일 경로 리스트
+    Return:
+        ms 단위를 제거한 파일 경로를 담은 리스트
+
+    """
+    return [split_ms_from_file_name(fn) for fn in file_list]
+
+
+def get_common_files(seg_list, pcd_fn_list, target=''):
+    """
+    제공 받은 가공데이터(seg)와 정제 데이터(refine/pcd)에서
+        파일명이 겹치는 파일 이름을 담은 리스트를 반환하는 메소드
+
+    -------------------------
+    주의)
+    - 가공 데이터(seg)와 정제데이터(refine) 간의 ms단위가 불일치하는 경우 발생
+    - 그래서 '날짜_시간_ms' 파일 명에서 '날짜_시간'만 가지고 공통 파일 갖고옴
+        - DOGU/CP/a/cloudy/220719/17-19/ 의 경우, '날짜_시간' 파일 중 중복하는 파일 존재
+        ex) 220719_183921_14.png, 220719_183921_54.png,
+
+    - 따라서, 위 경우만 제외하고 나머지는 '날짜_시간' 파일명이 겹치는 파일만 공통 파일(common files)으로 간주
+    ---------------------------
+
+    Args:
+        seg_list        가공 데이터. (de-id, mask, seg) 리스트
+        pcd_fn_list     정제 제이터 (refine/pcd)
+        target          데이터 scene을 구분하기 위한 인자. DOGU/CP/a/cloudy/220719/17-19/ 을 판별하기 위함
+    Return:
+        가공 데이터와 정제 데이터의 공통 파일명이 담긴 리스트
+
+    """
+    de_id_fn_list, mask_fn_list, seg_fn_list = seg_list
+    if not '/'.join(target) == 'DOGU/CP/a/cloudy/220719/17-19':
+        de_id_fn_list = split_ms_from_file_names(de_id_fn_list)
+        mask_fn_list = split_ms_from_file_names(mask_fn_list)
+        seg_fn_list = split_ms_from_file_names(seg_fn_list)
+        pcd_fn_list = split_ms_from_file_names(pcd_fn_list)
+
+    return list(
+        set(de_id_fn_list) & set(mask_fn_list) & set(seg_fn_list) & set(pcd_fn_list)
+        )
+
+
+def remove_existing_files(existing_file_names, common_file_names, target=''):
+    """
+    기존에 이미 전처리된 파일은 처리 대상에서 제외시키는 메소드
+
+    Args:
+        existing_file_names     기존 전처리된 파일명이 담긴 리스트
+        common_file_names       data root로부터 가져온 target 데이터 리스트
+        target                  데이터 scene을 구분하기 위한 인자. DOGU/CP/a/cloudy/220719/17-19/ 을 판별하기 위함
+    Return:
+        non_target              '이미' 전처리 된 파일명이 리스트
+        target                  전처리 해야 되는 파일명이 담긴 리스트
+
+    """
+    if not '/'.join(target) == 'DOGU/CP/a/cloudy/220719/17-19':
+        existing_file_names = split_ms_from_file_names(existing_file_names)
+
+    non_target = set(existing_file_names) & set(common_file_names)
+    target = set(common_file_names) - set(non_target)
+    return non_target, target
 
 
 def read_class_names(path):
@@ -59,7 +141,6 @@ def read_class_names(path):
                            'tree': 1},
             reverse_class_names = {0: 'human',
                                    1: 'tree'}
-
     Args:
         path       class name 경로
     Return:
@@ -135,7 +216,6 @@ def read_camera_intrinsic_file(path):
         path        내부 파라미터 파일 경로
     Return:
         (camera matrix, rectification, projection)
-
     """
     camera_matrix, rectification, projection = [], [], []
 
@@ -207,7 +287,7 @@ def read_calibration_file(path, is_intrinsic=True):
     camera intrinsic, camera extrinsic 파일을 읽는 메소드.
         is_intrinsic 인자에 따라 반환하는 값이 달라짐
 
-   #################
+    #################
     # 사용 안함!!!!
     ##############
 
@@ -216,7 +296,6 @@ def read_calibration_file(path, is_intrinsic=True):
         is_intrinsic        내부 파라미터 파일을 읽을 것인지 외부 파라미터 파일을 읽을 것인지 결정
     Return:
         is_intrinsic인자에 따라 파라미터 값을 반환
-
     """
     if is_intrinsic:
         camera_matrix, rectification, projection = read_camera_intrinsic_file(path)
@@ -229,22 +308,20 @@ def read_calibration_file(path, is_intrinsic=True):
 def get_target_data(path):
     """
     데이터 전처리를 할 대상 파일들을 가져오는 메소드.
-        대상 파일은 calibration 이 존재하는 데이터만 가져옴.
-
+       대상 파일은 calibration 이 존재하는 데이터만 가져옴.
     구글 드라이브에 포함되어 있는 파일을 확인해보면, '.DS_Store'가 포함되어 있음. 이는 MacOS 환경에서 압축 또는 압축해제를 했기 때문에 생기는 파일.
-        따라서, os.walk로 가져올 때 files에 ['.DS_Store'] 가 있는 경우가 생김. 이런 경우는 제외함
+       따라서, os.walk로 가져올 때 files에 ['.DS_Store'] 가 있는 경우가 생김. 이런 경우는 제외함
 
     Args:
-        path        데이터 root 경로. (ex, ~/52_2/)
+       path        데이터 root 경로. (ex, ~/52_2/)
     Return:
-        데이터 전처리를 할 대상 파일이 담긴 경로를 담은 리스트를 반환
-        ex, [['DOGU', 'CP', 'a', 'cloudy', '220719', '17-19'],
-             ['RASTECH', 'DCC', 'D', 'cloudy', '220901', '11-14'],
-             ['RASTECH', 'DCC', 'D', 'cloudy', '220902', '14-19'],
-             ...]
-
-             ['DOGU', 'CP', 'a', 'cloudy', '220719', '17-19'] 아래에 ['seg', 'refine', 'calibration'] 디렉토리가 있음!!
-            README의 Data Structure 확인!
+       데이터 전처리를 할 대상 파일이 담긴 경로를 담은 리스트를 반환
+       ex, [['DOGU', 'CP', 'a', 'cloudy', '220719', '17-19'],
+            ['RASTECH', 'DCC', 'D', 'cloudy', '220901', '11-14'],
+            ['RASTECH', 'DCC', 'D', 'cloudy', '220902', '14-19'],
+            ...]
+            ['DOGU', 'CP', 'a', 'cloudy', '220719', '17-19'] 아래에 ['seg', 'refine', 'calibration'] 디렉토리가 있음!!
+           README의 Data Structure 확인!
     """
     target_list = []
     for (root, _, files) in os.walk(path):
@@ -253,4 +330,3 @@ def get_target_data(path):
                 root.replace(path, '').split('/')[:-1]
             )
     return target_list
-
