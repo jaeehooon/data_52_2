@@ -92,14 +92,7 @@ def main(config):
             pcd_fn_list = get_file_names(pcd_list)
             print(pcd_fn_list[:4])
 
-            # common_file_names = list(
-            #     set(de_id_fn_list) & set(mask_fn_list) & set(seg_fn_list) & set(pcd_fn_list)
-            # )
-
             common_file_names = get_common_files((de_id_fn_list, mask_fn_list, seg_fn_list), pcd_fn_list, target)
-            print("\n\ncommon_file_names -----\n")
-            print(common_file_names[:2])
-            print('------------\n')
             print('#############')
             print("가공 데이터 공통 파일 수 : ", len(set(de_id_fn_list) & set(mask_fn_list) & set(seg_fn_list)))
             print("가공 데이터(seg)와 정제 데이터(refine/pcd)와 공통 파일 수: ", len(common_file_names))
