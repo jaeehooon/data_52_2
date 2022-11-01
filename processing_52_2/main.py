@@ -1,3 +1,4 @@
+import random
 import sys
 import os
 import argparse
@@ -30,10 +31,14 @@ def main(config):
         class_names = {
             'unlabeled': 0
         }
-    assert predefined_class_names == class_names                #
+    assert predefined_class_names == class_names, "!!"                #
 
     data_root = config.data_root
     output_path = config.output_path
+    # print('current path: ', os.getcwd())
+    # print("Data Root: ", data_root)
+    # print("Output Path: ", output_path)
+    # print(os.listdir(output_path))
 
     target_list = get_target_data(data_root)
     if not os.path.exists(output_path):
@@ -43,6 +48,10 @@ def main(config):
     output_label = os.path.join(output_path, 'LabelFolder')
     output_modal = os.path.join(output_path, 'ModalXFolder')
 
+    # print(len(os.listdir(output_rgb)))
+    # print(len(os.listdir(output_label)))
+    # print(len(os.listdir(output_modal)))
+
     if not os.path.exists(output_rgb):
         os.makedirs(output_rgb)
     if not os.path.exists(output_label):
@@ -50,10 +59,10 @@ def main(config):
     if not os.path.exists(output_modal):
         os.makedirs(output_modal)
 
-    existing_file_names = get_file_names(get_files(output_label), is_existing_file=True)
+    existing_file_names = get_file_names(get_files(output_label))
 
     for idx, target in enumerate(target_list):
-        print("\nIdx >>> ", idx + 1)
+        print("\n\nIdx >>> ", idx + 1)
         print("  ", '/'.join(target))
         comp, loc, scene, weather, date, timezone = target
 
@@ -76,37 +85,40 @@ def main(config):
             camera_list = get_files(os.path.join(refine_dir, 'camera'))
             pcd_list = get_files(os.path.join(refine_dir, 'pcd'))
 
-            de_id_fn_list = set(get_file_names(de_id_list, target))
-            mask_fn_list = set(get_file_names(mask_list, target))
-            seg_fn_list = set(get_file_names(seg_list, target))
-            camera_fn_list = set(get_file_names(camera_list, target))
-            pcd_fn_list = set(get_file_names(pcd_list, target))
-            print(list(pcd_fn_list)[:4])
+            de_id_fn_list = get_file_names(de_id_list)
+            mask_fn_list = get_file_names(mask_list)
+            seg_fn_list = get_file_names(seg_list)
+            camera_fn_list = get_file_names(camera_list)
+            pcd_fn_list = get_file_names(pcd_list)
+            print(pcd_fn_list[:4])
 
-            common_file_names = list(
-                de_id_fn_list & mask_fn_list & seg_fn_list & pcd_fn_list
-            )
+            # common_file_names = list(
+            #     set(de_id_fn_list) & set(mask_fn_list) & set(seg_fn_list) & set(pcd_fn_list)
+            # )
+
+            common_file_names = get_common_files((de_id_fn_list, mask_fn_list, seg_fn_list), pcd_fn_list, target)
+            print("\n\ncommon_file_names -----\n")
+            print(common_file_names[:2])
+            print('------------\n')
             print('#############')
-            print("가공 데이터 공통 파일 수 : ", len(list(de_id_fn_list & mask_fn_list & seg_fn_list)))
+            print("가공 데이터 공통 파일 수 : ", len(set(de_id_fn_list) & set(mask_fn_list) & set(seg_fn_list)))
             print("가공 데이터(seg)와 정제 데이터(refine/pcd)와 공통 파일 수: ", len(common_file_names))
             print("############")
 
             # 이미 final 에 존재하는 파일 개수, 처리 해야하는 파일 개수
-            _no_target_file = set(existing_file_names) & set(common_file_names)
-            common_file_names = set(common_file_names) - set(_no_target_file)
+            non_target, target = remove_existing_files(existing_file_names, common_file_names, target)
+            print("# of the files already existed: \t", len(non_target))
+            print("# of the target files (common file names): \t", len(target))
 
-            print("# of the files already existed: \t", len(_no_target_file))
-            print("# of the target files (common file names): \t", len(common_file_names))
-
-            print("# of file names: \t", len(common_file_names))
+            print("# of file names: \t", len(target))
             print("  label")
-            print("\t>>> de-identification:\t{:,d}/{:,d}".format(len(common_file_names), len(de_id_fn_list)))
-            print("\t>>> mask:\t\t\t\t{:,d}/{:,d}".format(len(common_file_names), len(mask_fn_list)))
-            print("\t>>> segmentation:\t\t{:,d}/{:,d}".format(len(common_file_names), len(seg_fn_list)))
+            print("\t>>> de-identification:\t{:,d}/{:,d}".format(len(target), len(de_id_fn_list)))
+            print("\t>>> mask:\t\t\t\t{:,d}/{:,d}".format(len(target), len(mask_fn_list)))
+            print("\t>>> segmentation:\t\t{:,d}/{:,d}".format(len(target), len(seg_fn_list)))
 
             print("  Data")
-            print("\t>>> camera:\t\t\t\t{:,d}/{:,d}".format(len(common_file_names), len(camera_fn_list)))
-            print("\t>>> pcd:\t\t\t\t{:,d}/{:,d}".format(len(common_file_names), len(pcd_fn_list)))
+            print("\t>>> camera:\t\t\t\t{:,d}/{:,d}".format(len(target), len(camera_fn_list)))
+            print("\t>>> pcd:\t\t\t\t{:,d}/{:,d}".format(len(target), len(pcd_fn_list)))
             print()
 
             #############
@@ -121,10 +133,15 @@ def main(config):
             pcd_list = sorted([fn for fn in pcd_list
                                if '_'.join(os.path.splitext(os.path.basename(fn))[0].split('_')[:-1]) in common_file_names])
 
+            # print("de_id_list: ", de_id_list[:2], '...')
+            # print("mask_list: ", mask_list[:2], '...')
+            # print("seg_list: ", seg_list[:2], '...')
+            # print("pcd_list: ", pcd_list[:2], '...')
+
             for idx, (de_id_path, mask_path, seg_path, pcd_path) in enumerate(zip(de_id_list, mask_list, seg_list, pcd_list)):
                 fn = os.path.splitext(os.path.basename(de_id_path))[0]
 
-                if idx % 5 == 0 or idx == len(de_id_list) - 1:
+                if idx % 4 == 0 or idx == len(de_id_list) - 1:
                     print('\r{:,d}/{:,d}'.format(idx + 1, len(de_id_list)), end='')
 
                 mask_data, mask_values = read_mask_file(mask_path, mode=cv2.IMREAD_GRAYSCALE)
