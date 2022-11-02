@@ -118,13 +118,13 @@ def main(config):
             # labeling
             ###############
             de_id_list = sorted([fn for fn in de_id_list
-                                 if '_'.join(os.path.splitext(os.path.basename(fn))[0].split('_')[:-1]) in common_file_names])
+                                 if os.path.splitext(os.path.basename(fn))[0] in common_file_names])
             mask_list = sorted([fn for fn in mask_list
-                                if '_'.join(os.path.splitext(os.path.basename(fn))[0].split('_')[:-1]) in common_file_names])
+                                if os.path.splitext(os.path.basename(fn))[0] in common_file_names])
             seg_list = sorted([fn for fn in seg_list
-                               if '_'.join(os.path.splitext(os.path.basename(fn))[0].split('_')[:-1]) in common_file_names])
+                               if os.path.splitext(os.path.basename(fn))[0] in common_file_names])
             pcd_list = sorted([fn for fn in pcd_list
-                               if '_'.join(os.path.splitext(os.path.basename(fn))[0].split('_')[:-1]) in common_file_names])
+                               if os.path.splitext(os.path.basename(fn))[0] in common_file_names])
 
             # print("de_id_list: ", de_id_list[:2], '...')
             # print("mask_list: ", mask_list[:2], '...')
