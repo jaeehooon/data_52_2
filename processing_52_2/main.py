@@ -34,7 +34,8 @@ def main(config):
     assert predefined_class_names == class_names, "!!"                #
 
     data_root = config.data_root
-    output_path = config.output_path
+    # output_path = os.path.join(config.data_root, config.output_path)
+    output_path = os.path.join('../dataset/52_2/', config.output_path)
     # print('current path: ', os.getcwd())
     # print("Data Root: ", data_root)
     # print("Output Path: ", output_path)
@@ -93,43 +94,66 @@ def main(config):
             print(pcd_fn_list[:4])
 
             common_file_names = get_common_files((de_id_fn_list, mask_fn_list, seg_fn_list), pcd_fn_list, target)
+            print("\n\ncommon_file_names -----\n")
+            print(common_file_names[:2])
+            print('------------\n')
             print('#############')
             print("가공 데이터 공통 파일 수 : ", len(set(de_id_fn_list) & set(mask_fn_list) & set(seg_fn_list)))
             print("가공 데이터(seg)와 정제 데이터(refine/pcd)와 공통 파일 수: ", len(common_file_names))
             print("############")
 
             # 이미 final 에 존재하는 파일 개수, 처리 해야하는 파일 개수
-            non_target, target = remove_existing_files(existing_file_names, common_file_names, target)
+            non_target, target_files = remove_existing_files(existing_file_names, common_file_names, target)
             print("# of the files already existed: \t", len(non_target))
-            print("# of the target files (common file names): \t", len(target))
+            print("# of the target files (common file names): \t", len(target_files))
 
-            print("# of file names: \t", len(target))
+            print("# of file names: \t", len(target_files))
             print("  label")
-            print("\t>>> de-identification:\t{:,d}/{:,d}".format(len(target), len(de_id_fn_list)))
-            print("\t>>> mask:\t\t\t\t{:,d}/{:,d}".format(len(target), len(mask_fn_list)))
-            print("\t>>> segmentation:\t\t{:,d}/{:,d}".format(len(target), len(seg_fn_list)))
+            print("\t>>> de-identification:\t{:,d}/{:,d}".format(len(target_files), len(de_id_fn_list)))
+            print("\t>>> mask:\t\t\t\t{:,d}/{:,d}".format(len(target_files), len(mask_fn_list)))
+            print("\t>>> segmentation:\t\t{:,d}/{:,d}".format(len(target_files), len(seg_fn_list)))
 
             print("  Data")
-            print("\t>>> camera:\t\t\t\t{:,d}/{:,d}".format(len(target), len(camera_fn_list)))
-            print("\t>>> pcd:\t\t\t\t{:,d}/{:,d}".format(len(target), len(pcd_fn_list)))
+            print("\t>>> camera:\t\t\t\t{:,d}/{:,d}".format(len(target_files), len(camera_fn_list)))
+            print("\t>>> pcd:\t\t\t\t{:,d}/{:,d}".format(len(target_files), len(pcd_fn_list)))
             print()
 
             #############
             # labeling
             ###############
-            de_id_list = sorted([fn for fn in de_id_list
-                                 if os.path.splitext(os.path.basename(fn))[0][:-3] in target])
-            mask_list = sorted([fn for fn in mask_list
-                                if os.path.splitext(os.path.basename(fn))[0][:-3] in target])
-            seg_list = sorted([fn for fn in seg_list
-                               if os.path.splitext(os.path.basename(fn))[0][:-3] in target])
-            pcd_list = sorted([fn for fn in pcd_list
-                               if os.path.splitext(os.path.basename(fn))[0][:-3] in target])
+            if not '/'.join(target) == 'DOGU/CP/a/cloudy/220719/17-19':
+                de_id_list = sorted(
+                    [fn for fn in de_id_list if os.path.splitext(os.path.basename(fn))[0][:-3] in target_files]
+                )
+                mask_list = sorted(
+                    [fn for fn in mask_list if os.path.splitext(os.path.basename(fn))[0][:-3] in target_files]
+                )
+                seg_list = sorted(
+                    [fn for fn in seg_list if os.path.splitext(os.path.basename(fn))[0][:-3] in target_files]
+                )
+                pcd_list = sorted(
+                    [fn for fn in pcd_list if os.path.splitext(os.path.basename(fn))[0][:-3] in target_files]
+                )
+            else:
+                print('de_id_list: ', de_id_list[:3])
+                de_id_list = sorted(
+                    [fn for fn in de_id_list if os.path.splitext(os.path.basename(fn))[0] in target_files]
+                )
+                mask_list = sorted(
+                    [fn for fn in mask_list if os.path.splitext(os.path.basename(fn))[0] in target_files]
+                )
+                seg_list = sorted(
+                    [fn for fn in seg_list if os.path.splitext(os.path.basename(fn))[0] in target_files]
+                )
+                pcd_list = sorted(
+                    [fn for fn in pcd_list if os.path.splitext(os.path.basename(fn))[0] in target_files]
+                )
 
-            # print("de_id_list: ", de_id_list[:2], '...')
-            # print("mask_list: ", mask_list[:2], '...')
-            # print("seg_list: ", seg_list[:2], '...')
-            # print("pcd_list: ", pcd_list[:2], '...')
+            print('target: ', list(target_files)[:-4])
+            print("de_id_list: ", de_id_list[:2], '...')
+            print("mask_list: ", mask_list[:2], '...')
+            print("seg_list: ", seg_list[:2], '...')
+            print("pcd_list: ", pcd_list[:2], '...')
 
             for idx, (de_id_path, mask_path, seg_path, pcd_path) in enumerate(zip(de_id_list, mask_list, seg_list, pcd_list)):
                 fn = os.path.splitext(os.path.basename(de_id_path))[0]
